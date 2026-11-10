@@ -338,4 +338,4 @@ importance_df = importance_df.sort_values(
 
 print("\n===== Random Forest Feature Importance =====")
 
-print(importance_df.head(20).round(4).to_string(index=False))
+# print(importance_df.head(20).round(4).to_string(index=False))
