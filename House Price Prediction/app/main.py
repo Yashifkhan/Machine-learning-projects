@@ -11,6 +11,8 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.impute import SimpleImputer
+
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from scipy.sparse import issparse
 
@@ -43,13 +45,41 @@ num_cols = [
     "Distance_to_Metro_km", "Distance_to_City_Center_km",
 ]
 
+# preprocessor = ColumnTransformer(
+#     transformers=[
+#         ("cat", OneHotEncoder(drop="first", handle_unknown="ignore"), cat_cols),
+#         ("num", StandardScaler(), num_cols),
+#         ("bin", "passthrough", binary_cols),
+#     ]
+# )
+
+
+# Categorical preprocessing
+cat_preprocessor = Pipeline(steps=[
+    ("imputer", SimpleImputer(strategy="most_frequent")),
+    ("onehot", OneHotEncoder(handle_unknown="ignore"))
+])
+
+# Numerical preprocessing
+num_preprocessor = Pipeline(steps=[
+    ("imputer", SimpleImputer(strategy="median"))
+])
+
+# Binary preprocessing
+bin_preprocessor = Pipeline(steps=[
+    ("imputer", SimpleImputer(strategy="most_frequent"))
+])
+
 preprocessor = ColumnTransformer(
     transformers=[
-        ("cat", OneHotEncoder(drop="first", handle_unknown="ignore"), cat_cols),
-        ("num", StandardScaler(), num_cols),
-        ("bin", "passthrough", binary_cols),
-    ]
+        ("cat", cat_preprocessor, cat_cols),
+        ("num", num_preprocessor, num_cols),
+        ("bin", bin_preprocessor, binary_cols)
+    ],
+    remainder="drop"
 )
+
+# print(X[feature_cols].isnull().sum())
 
 # linear regression model code 
 
@@ -265,77 +295,83 @@ rf_model = Pipeline(steps=[
 ])
 
 # Train model
-rf_model.fit(X_train, y_train)
+# rf_model.fit(X_train, y_train)
 
 print("Random Forest training completed!")
-y_pred_log = rf_model.predict(X_test)
+# y_pred_log = rf_model.predict(X_test)
 
 # Convert predictions to original price scale
-y_pred_actual = np.expm1(y_pred_log)
+# y_pred_actual = np.expm1(y_pred_log)
 
 # Convert actual test values to original price scale
-y_test_actual = np.expm1(y_test)
-mae = mean_absolute_error(y_test_actual, y_pred_actual)
+# y_test_actual = np.expm1(y_test)
+# mae = mean_absolute_error(y_test_actual, y_pred_actual)
 
-mse = mean_squared_error(y_test_actual, y_pred_actual)
+# mse = mean_squared_error(y_test_actual, y_pred_actual)
 
-rmse = np.sqrt(mse)
+# rmse = np.sqrt(mse)
 
-r2 = r2_score(y_test_actual, y_pred_actual)
+# r2 = r2_score(y_test_actual, y_pred_actual)
 
-print("\n===== Random Forest Evaluation =====")
+# print("\n===== Random Forest Evaluation =====")
 
-print(f"MAE:  {mae:.2f} Lakhs")
-print(f"MSE:  {mse:.2f} Lakhs²")
-print(f"RMSE: {rmse:.2f} Lakhs")
-print(f"R2:   {r2:.4f}")
+# print(f"MAE:  {mae:.2f} Lakhs")
+# print(f"MSE:  {mse:.2f} Lakhs²")
+# print(f"RMSE: {rmse:.2f} Lakhs")
+# print(f"R2:   {r2:.4f}")
 
 # Training predictions
-train_pred_log = rf_model.predict(X_train)
+# train_pred_log = rf_model.predict(X_train)
 
-# Convert to original price scale
-train_actual = np.expm1(y_train)
-train_pred_actual = np.expm1(train_pred_log)
+# # Convert to original price scale
+# train_actual = np.expm1(y_train)
+# train_pred_actual = np.expm1(train_pred_log)
 
-# Calculate MAE
-train_mae = mean_absolute_error(
-    train_actual,
-    train_pred_actual
-)
+# # Calculate MAE
+# train_mae = mean_absolute_error(
+#     train_actual,
+#     train_pred_actual
+# )
 
-test_mae = mean_absolute_error(
-    y_test_actual,
-    y_pred_actual
-)
+# test_mae = mean_absolute_error(
+#     y_test_actual,
+#     y_pred_actual
+# )
 
-print("\n===== Training vs Testing =====")
+# print("\n===== Training vs Testing =====")
 
-print(f"Training MAE: {train_mae:.2f} Lakhs")
-print(f"Testing MAE:  {test_mae:.2f} Lakhs")
+# print(f"Training MAE: {train_mae:.2f} Lakhs")
+# print(f"Testing MAE:  {test_mae:.2f} Lakhs")
 
 
-feature_names = (
-    rf_model
-    .named_steps["preprocess"]
-    .get_feature_names_out()
-)
+# feature_names = (
+#     rf_model
+#     .named_steps["preprocess"]
+#     .get_feature_names_out()
+# )
 
-importances = (
-    rf_model
-    .named_steps["regressor"]
-    .feature_importances_
-)
+# importances = (
+#     rf_model
+#     .named_steps["regressor"]
+#     .feature_importances_
+# )
 
-importance_df = pd.DataFrame({
-    "Feature": feature_names,
-    "Importance": importances
-})
+# importance_df = pd.DataFrame({
+#     "Feature": feature_names,
+#     "Importance": importances
+# })
 
-importance_df = importance_df.sort_values(
-    by="Importance",
-    ascending=False
-)
+# importance_df = importance_df.sort_values(
+#     by="Importance",
+#     ascending=False
+# )
 
-print("\n===== Random Forest Feature Importance =====")
+# print("\n===== Random Forest Feature Importance =====")
 
-# print(importance_df.head(20).round(4).to_string(index=False))
+
+all_cols = cat_cols + binary_cols + num_cols
+
+for col in all_cols:
+    print(f"\n===== {col} =====")
+    print(df[col].unique())
+    print("Total Unique Values:", df[col].nunique())
