@@ -1,4 +1,11 @@
 
+
+*.joblib
+*.pkl
+*.h5
+*.pt
+*.pth
+
 # Environment variables
 .env
 .env.*
